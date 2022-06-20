@@ -14,6 +14,8 @@
 - solve the reverse the embedding problem (look what the embedding is made of)
 - the above requires 1-hot encoding and processing position embedding
 - the path generation, with steps etc
+- device bug, something isnt on the proper device
+
 
 # WHAT IS READY
 - the reverse the core problem
@@ -28,6 +30,22 @@
 - make the thing work on inceptionv3 as well :)
   (so far not successfull)
 
-# DONE
+# EXPERIMENTS WITH LR - ADAM
 
+
+10/48(*) epochs
+0.01 * (best)
+0.005
+0.02
+0.001 ~ 1e-5 *
+0.000001
+---
+0.2 *
+1. *
+
+BAD
+0.1
+
+# DONE
+- learning is very slow, try other optimizer: simple gradient(?) > doesnt seem better
 - add tensorboard to survey progress

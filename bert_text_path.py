@@ -1,14 +1,30 @@
 # systemd-run --user --pipe -p MemoryMax=6000M bash
 # cd projects/text-paths
 # python
+import argparse
+import re
+import sys
 
 import matplotlib.pyplot as pyplot
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
 
-torch_device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f'Using {torch_device} device')
+argparser = argparse.ArgumentParser()
+argparser.add_argument('--lr', type=float, default=0.01)
+argparser.add_argument('--device', type=str, default='auto')
+argparser.add_argument('--core-n-max-steps', type=int, default=332)
+argparser.add_argument('--core-small-loss', type=float, default=13500)#11080)
+parsed_arguments = argparser.parse_args()
+
+learning_rate = parsed_arguments.lr
+torch_device = parsed_arguments.device
+core_n_max_steps = parsed_arguments.core_n_max_steps
+core_small_loss = parsed_arguments.core_small_loss
+
+if(torch_device == 'auto'):
+  torch_device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f'Using device: {torch_device}')
 
 tensorboard_writer = SummaryWriter()
 
@@ -19,13 +35,13 @@ start_sentence = 'There is no place like home.'
 end_sentence_one_word = 'There is no place like Italy.'
 end_sentence_keep_meaning = 'No place is like home.'
 end_sentence_different = 'The cat jumps over the fence.'
-nb_interpolation_steps = 10
+nb_interpolation_steps = 21
 # DEBUG:
-nb_interpolation_steps = 2
+#nb_interpolation_steps = 1 # 2
 # <<<<<
-core_small_loss = 0.1
+#core_small_loss = 0.1
 #core_n_max_steps = 1220
-core_n_max_steps = 12 # 122
+##core_n_max_steps = 48 #12 # 122
 embedding_small_loss = 10
 embedding_n_max_steps = 12 # 212
 
@@ -56,6 +72,7 @@ solver = ModelInverter(core_model,
                        start_core_input.detach().clone(),
                        loss_function=core_bert_loss_function,
                        tensorboard_writer=tensorboard_writer)
+solver.to(torch_device)
 
 # >
 for i in range(nb_interpolation_steps):
@@ -67,14 +84,14 @@ for i in range(nb_interpolation_steps):
   solver.compute_inverse(outputs[i],
                          n_max_steps=core_n_max_steps,
                          min_loss=core_small_loss,
-                         torch_device='cpu',
-                         lr=0.01)#lr=0.0001) # DEBUG: 0.01<ok, 1.<bad, 0.1<bad, 0.02 < ok?
+                         torch_device=torch_device,#'cpu',
+                         lr=learning_rate)#lr=0.01)#lr=0.0001) # DEBUG: 0.01<ok, 1.<bad, 0.1<bad, 0.02 < ok?
   embedding_vectors.append(solver.get_computed_solution())
 
 # DEBUG:
-print('computed embedding vectors:')
-for i, v in enumerate(embedding_vectors):
-  print(f'{i}: {v}')
+#print('computed embedding vectors:')
+#for i, v in enumerate(embedding_vectors):
+#  print(f'{i}: {v}')
 # <<<<
 
 # embedding path
@@ -82,6 +99,7 @@ for i, v in enumerate(embedding_vectors):
 input_vectors = [ start_emb_input ]
 
 solver = ModelInverter(bert_modules.get_embedding_model(), start_emb_input.clone().detach())
+solver.to(torch_device)
 
 # >
 for i in range(nb_interpolation_steps):
@@ -93,18 +111,24 @@ for i in range(nb_interpolation_steps):
   solver.compute_inverse(embedding_vectors[i],
                          n_max_steps=embedding_n_max_steps,
                          min_loss=embedding_small_loss,
-                         torch_device='cpu',
+                         torch_device=torch_device, #'cpu',
                          lr=0.01)
   input_vectors.append(solver.get_computed_solution())
 
 # DEBUG:
-print('computed input vectors:')
-for i, v in enumerate(input_vectors):
-  print(f'{i}: {v}')
+#print('computed input vectors:')
+#for i, v in enumerate(input_vectors):
+#  print(f'{i}: {v}')
 # <<<<
 
 # text path
 # TODO translate the sequence of 1hot vectors into text (check how to use the Tokenizer)
+def remove_special_tokens(text):
+  text = text.replace('[PAD] ', '')
+  text = text.replace('[PAD]', '')
+  text = text.replace('[CLS] ', '')
+  text = text.replace('[SEP] ', '')
+  return text
 
 def translate_inputs_to_text(tokenizer, input_vector):
   input_vector = input_vector[0]
@@ -117,6 +141,7 @@ def translate_inputs_to_text(tokenizer, input_vector):
       sequence.append(0)
   # TODO: not sure this works like that
   text = tokenizer.decode(sequence)
+  text = remove_special_tokens(text)
   return text
 
 tokenizer = bert_modules.tokenizer
