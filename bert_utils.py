@@ -100,7 +100,9 @@ class BertModules:
 
 def core_bert_loss_function(output, target, loss_function=nn.MSELoss(reduction='sum')):
   #return loss_function(output.last_hidden_state, target.last_hidden_state)
-  return loss_function(output.last_hidden_state, target)
+  if(hasattr(output, 'last_hidden_state')):
+    return loss_function(output.last_hidden_state, target)
+  return loss_function(output, target)
 
 
 

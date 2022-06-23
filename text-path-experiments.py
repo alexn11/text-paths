@@ -36,12 +36,44 @@ model.eval()
 #print(model)
 
 
-input_vectors = torch.rand((nb_input_attempts, model_dimension), dtype=torch.float, device=torch_device, requires_grad=True)
+input_vectors = torch.rand((nb_input_attempts, model_dimension),
+                           dtype=torch.float,
+                           device=torch_device,
+                           requires_grad=True)
 
-expected_output_vector = model(torch.rand(model_dimension, dtype=torch.float, device=torch_device, requires_grad=False)).detach()
-expected_output_vector = expected_output_vector * (1.+perturbation_size * torch.rand(model_dimension))
+expected_output_vector = model(torch.rand(model_dimension,
+                                          dtype=torch.float,
+                                          device=torch_device,
+                                          requires_grad=False)).detach()
+expected_output_vector = expected_output_vector * (1.+perturbation_size * torch.rand(model_dimension, device=torch_device))
 expected_output = expected_output_vector.repeat((nb_input_attempts, 1))
 
+# new version
+from input_optimizer import ModelInverter
+from torch.utils.tensorboard import SummaryWriter
+
+tensorboard_writer = SummaryWriter()
+
+model_inverter = ModelInverter(model,
+                               input_vectors,
+                               loss_function=nn.MSELoss(reduction='sum'),
+                               tensorboard_writer=tensorboard_writer)
+loss_history = model_inverter.compute_inverse(expected_output,
+                                              n_max_steps=1000,
+                                              torch_device=torch_device,
+                                              lr=0.1)
+
+
+
+
+output = model(model_inverter.get_computed_solution())
+output.mean(0)
+expected_output_vector
+
+# (sort of work, not particularly good)
+
+# -----------------------------------------------------------------
+# old version:
 class InputOptimizer(nn.Module):
   def __init__(self, model, input_vectors):
     super(InputOptimizer, self).__init__()
@@ -50,7 +82,6 @@ class InputOptimizer(nn.Module):
     self.register_parameter('input_vector', self.input_vectors)
   def forward(self):
     return self.model(self.input_vectors)
-
 
 input_optimizer = InputOptimizer(model, input_vectors).to(torch_device)
 
@@ -103,11 +134,73 @@ pyplot.show()
 output = model(parameters_to_optimize[0])
 output.mean(0)
 expected_output_vector
+# -----------------------------------------------------------------
 
 
 
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> INCEPTIONv3
+#  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> INCEPTIONv3
+# new ver
+import numpy
+import torch
+from torch import nn
+from input_optimizer import ModelInverter
+from torch.utils.tensorboard import SummaryWriter
 
+torch_device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f'Using {torch_device} device')
+
+tensorboard_writer = SummaryWriter()
+
+model = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True).to(torch_device)
+
+norm_mean = [ 0.485, 0.456, 0.406 ]
+norm_std = [ 0.229, 0.224, 0.225 ]
+
+norm_mean = torch.tensor(norm_mean).repeat(299, 299, 1).T # < deprecation warning about T
+norm_std = torch.tensor(norm_std).repeat(299, 299, 1).T
+
+norm_mean = norm_mean.to(torch_device)
+norm_std = norm_std.to(torch_device)
+
+input_vector = (torch.rand((1, 3, 299, 299),
+                           dtype=torch.float,
+                           device=torch_device,
+                           requires_grad=True) - norm_mean) / norm_std
+
+#input_vector.to(torch_device)
+
+model.eval()
+nothing = model(input_vector)
+# input shape: batch_size x 3 x 299 x 299
+# output shape: batch_size x 1000
+
+expected_output_vector = numpy.zeros(shape=nothing.shape)
+expected_output_vector[0, 31] = 1.
+expected_output_vector = torch.tensor(expected_output_vector,
+                                      dtype=torch.float,
+                                      device=torch_device)
+
+
+model_inverter = ModelInverter(model,
+                               input_vector,
+                               loss_function=nn.MSELoss(reduction='sum'),
+                               tensorboard_writer=tensorboard_writer)
+loss_history = model_inverter.compute_inverse(expected_output_vector,
+                                              n_max_steps=10000,
+                                              torch_device=torch_device,
+                                              lr=0.0001)
+
+
+
+
+output = model(model_inverter.get_computed_solution())
+output.mean(0)
+expected_output_vector
+
+
+
+# -----------------------------------------------------------------
+# old ver
 import torch
 from torch import nn
 import matplotlib.pyplot as pyplot

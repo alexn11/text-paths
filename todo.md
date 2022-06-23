@@ -15,7 +15,7 @@
 - the above requires 1-hot encoding and processing position embedding
 - the path generation, with steps etc
 - device bug, something isnt on the proper device
-
+- 🐈️
 
 # WHAT IS READY
 - the reverse the core problem

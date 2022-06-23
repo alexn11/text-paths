@@ -15,12 +15,14 @@ argparser.add_argument('--lr', type=float, default=0.01)
 argparser.add_argument('--device', type=str, default='auto')
 argparser.add_argument('--core-n-max-steps', type=int, default=332)
 argparser.add_argument('--core-small-loss', type=float, default=13500)#11080)
+argparser.add_argument('--nb-interpolation-steps', type=int, default=21)
 parsed_arguments = argparser.parse_args()
 
 learning_rate = parsed_arguments.lr
 torch_device = parsed_arguments.device
 core_n_max_steps = parsed_arguments.core_n_max_steps
 core_small_loss = parsed_arguments.core_small_loss
+nb_interpolation_steps = parsed_arguments.nb_interpolation_steps
 
 if(torch_device == 'auto'):
   torch_device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -35,7 +37,6 @@ start_sentence = 'There is no place like home.'
 end_sentence_one_word = 'There is no place like Italy.'
 end_sentence_keep_meaning = 'No place is like home.'
 end_sentence_different = 'The cat jumps over the fence.'
-nb_interpolation_steps = 21
 # DEBUG:
 #nb_interpolation_steps = 1 # 2
 # <<<<<
@@ -72,7 +73,6 @@ solver = ModelInverter(core_model,
                        start_core_input.detach().clone(),
                        loss_function=core_bert_loss_function,
                        tensorboard_writer=tensorboard_writer)
-solver.to(torch_device)
 
 # >
 for i in range(nb_interpolation_steps):
