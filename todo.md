@@ -11,10 +11,13 @@
 
 # TODO
 - text path: do forward then backward then take average?
+- move "torch_device" to constructor
 - text path: try the other experiments
 - inception:try inverse with the logits/embedding instead of class
 - now that it is doing model.eval() try again with bert check if there is still an error < the error still there
 - inceptionv3: add regularisation to make smoother images?
+  "small amount of L2 regularization (λ = 0.005)" (arxiv 1605.09304)
+  check "deepdream"
 - inception: try different seeds
 - inception: compare with google
 - training for the inverse: the loss doesnt decrease a lot if at all.
