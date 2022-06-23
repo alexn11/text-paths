@@ -41,11 +41,14 @@ class InputOptimizer(nn.Module):
     self.model.eval()
 
 class GradientDescent(torch.optim.Optimizer):
-  def __init__(self, params, lr=1.):
+  # TODO: regularization
+  def __init__(self, params, lr=1., regularization_coeff=0.):
     defaults = {
       'lr': lr,
+      'regularization_coeff': regularization_coeff,
     }
     super(GradientDescent, self).__init__(params, defaults)
+    self.do_regularize = (regularization_coeff != 0.)
 
   def step(self, closure=None):
 
@@ -64,7 +67,11 @@ class GradientDescent(torch.optim.Optimizer):
 
 class ModelInverter:
 
-  def __init__(self, model, input_vectors, loss_function=nn.MSELoss(reduction='sum'), tensorboard_writer=None):
+  def __init__(self,
+               model,
+               input_vectors,
+               loss_function=nn.MSELoss(reduction='sum'),
+               tensorboard_writer=None):
     self.input_optimizer_model = InputOptimizer(model, input_vectors)
     self.loss_function = loss_function
     self.tensorboard_writer = tensorboard_writer
@@ -83,7 +90,12 @@ class ModelInverter:
     self.expected_output = self.expected_output.to(torch_device)
     self.input_optimizer_model.to(torch_device)
 
-  def prepare_computations(self, expected_output, torch_device='cpu', lr=0.0001, optimizer_class=None):
+  def prepare_computations(self,
+                           expected_output,
+                           torch_device='cpu',
+                           lr=0.0001,
+                           optimizer_class=None,
+                           optimizer_kwargs={}):
   
     self.expected_output = expected_output
 
@@ -93,31 +105,16 @@ class ModelInverter:
     #assert(parameters_to_optimize[0].device == torch.device('cuda:0'))
     
     if(optimizer_class is None):
-      self.optimizer = torch.optim.Adam(parameters_to_optimize, lr=lr)
+      # add some regularisation
+      self.optimizer = torch.optim.Adam(parameters_to_optimize, lr=lr, weight_decay=1.e-5)
       #self.optimizer = torch.optim.SGD(parameters_to_optimize, lr=lr)
       #self.optimizer = GradientDescent(parameters_to_optimize, lr=lr)
     else:
-      self.optimizer = optimizer_class(parameters_to_optimize, lr=lr)
+      self.optimizer = optimizer_class(parameters_to_optimize, lr=lr, **optimizer_kwargs)
     
     input_optimizer = self.input_optimizer_model
     input_optimizer.train()
     
-  # https://stackoverflow.com/questions/52988876/how-can-i-visualize-what-happens-during-loss-backward
-  def getBack(self, var_grad_fn):
-    #print(var_grad_fn)
-    for n in var_grad_fn.next_functions:
-        if n[0]:
-            try:
-                tensor = getattr(n[0], 'variable')
-                #print(n[0])
-                #print('Tensor with grad found:', tensor)
-                #print(' - gradient:', tensor.grad)
-                #print()
-                #print(f'device: {tensor.device}')
-                assert(tensor.device == torch.device('cuda:0'))
-            except AttributeError as e:
-                self.getBack(n[0])
-
   def computation_step(self, step=None):
     self.optimizer.zero_grad()
     current_output = self.input_optimizer_model.forward()
@@ -149,9 +146,14 @@ class ModelInverter:
                       min_loss=0.1,
                       torch_device='cpu',
                       lr=0.0001,
-                      optimizer_class=None):
+                      optimizer_class=None,
+                      optimizer_kwargs={}):
 
-    self.prepare_computations(expected_output, torch_device=torch_device, lr=lr, optimizer_class=optimizer_class)
+    self.prepare_computations(expected_output,
+                              torch_device=torch_device,
+                              lr=lr,
+                              optimizer_class=optimizer_class,
+                              optimizer_kwargs=optimizer_kwargs)
   
     loss_values = []
     
@@ -167,73 +169,6 @@ class ModelInverter:
 
   def get_computed_solution(self):
     return self.input_optimizer_model.input_vectors
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
