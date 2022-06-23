@@ -1,10 +1,23 @@
-
+from multiprocessing.sharedctypes import Value
+import sys
 import numpy
 import torch
 from torch import nn
 from input_optimizer import ModelInverter
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import save_image
+
+default_image_class = 941
+image_class = default_image_class
+if(len(sys.argv) > 1):
+    image_class = sys.argv[1]
+    try:
+        image_class = int(image_class)
+    except ValueError:
+        image_class = default_image_class
+    else:
+        if((image_class < 0) or (image_class >= 1000)):
+            image_class = default_image_class
 
 torch_device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f'Using {torch_device} device')
@@ -27,6 +40,8 @@ input_vector = (torch.rand((1, 3, 299, 299),
                            device=torch_device,
                            requires_grad=True) - norm_mean) / norm_std
 
+save_image(input_vector[0], f'initial-image-{image_class}.png')
+
 #input_vector.to(torch_device)
 
 model.eval()
@@ -35,7 +50,7 @@ nothing = model(input_vector)
 # output shape: batch_size x 1000
 
 expected_output_vector = numpy.zeros(shape=nothing.shape)
-expected_output_vector[0, 31] = 1.
+expected_output_vector[0, image_class] = 1.
 expected_output_vector = torch.tensor(expected_output_vector,
                                       dtype=torch.float,
                                       device=torch_device)
@@ -62,4 +77,4 @@ output = model(generated_image)
 print(output)
 print(expected_output_vector)
 
-save_image(generated_image[0], 'generated-image.png')
+save_image(generated_image[0], f'generated-image-{image_class}.png')

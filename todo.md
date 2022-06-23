@@ -10,7 +10,9 @@
 - at each step can start the optimization process with the previous step input
 
 # TODO
+- now that it is doing model.eval() try again with bert check if there is still an error < the error still there
 - inceptionv3: add regularisation to make smoother images?
+- inception: try different seeds
 - training for the inverse: the loss doesnt decrease a lot if at all.
 - solve the reverse the embedding problem (look what the embedding is made of)
 - the above requires 1-hot encoding and processing position embedding
