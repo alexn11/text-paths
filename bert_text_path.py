@@ -27,6 +27,9 @@ argparser.add_argument('--nb-interpolation-steps', type=int, default=21)
 argparser.add_argument('--start-sentence', type=str, default=default_start_sentence)
 argparser.add_argument('--end-sentence', type=str, default=default_end_sentence)
 argparser.add_argument('--weight-decay', type=float, default=1.e-5)
+argparser.add_argument('--embedding-small-loss', type=int, default=10)
+argparser.add_argument('--embedding-n-max-steps', type=int, default=212)# = 12
+
 parsed_arguments = argparser.parse_args()
 
 print('command line arguments values:')
@@ -40,6 +43,8 @@ torch_device = parsed_arguments.device
 nb_interpolation_steps = parsed_arguments.nb_interpolation_steps
 core_n_max_steps = parsed_arguments.core_n_max_steps
 core_small_loss = parsed_arguments.core_small_loss
+embedding_n_max_steps = parsed_arguments.embedding_n_max_steps
+embedding_small_loss = parsed_arguments.embedding_small_loss
 learning_rate = parsed_arguments.lr
 weight_decay = parsed_arguments.weight_decay
 
@@ -51,12 +56,6 @@ tensorboard_writer = SummaryWriter()
 
 from input_optimizer import ModelInverter
 from bert_utils import BertModules, core_bert_loss_function
-
-
-embedding_small_loss = 10
-embedding_n_max_steps = 12 # 212
-
-
 
 bert_modules = BertModules()
 core_model = bert_modules.get_core_model()
