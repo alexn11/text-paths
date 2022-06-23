@@ -10,6 +10,7 @@
 - at each step can start the optimization process with the previous step input
 
 # TODO
+- improve text path results
 - input images in invert inception instead of doing random images
 - theres a deprecation warning about using .T ~line 65 of invert_inceptionv3
 - need to find the correct lr for embedding inception < maybe not < but maybe find the right weight_decay

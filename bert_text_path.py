@@ -84,8 +84,9 @@ solver = ModelInverter(core_model,
                        torch_device=torch_device,
                        tensorboard_writer=tensorboard_writer)
 print('pass: core')
-for i in tqdm.tqdm(range(nb_interpolation_steps)):
-  solver.compute_inverse(outputs[i],
+interpolation_progress_bar = tqdm.tqdm(range(nb_interpolation_steps))
+for i in interpolation_progress_bar:
+  loss_history = solver.compute_inverse(outputs[i],
                          n_max_steps=core_n_max_steps,
                          min_loss=core_small_loss,
                          lr=learning_rate,
@@ -93,6 +94,7 @@ for i in tqdm.tqdm(range(nb_interpolation_steps)):
                           'weight_decay': weight_decay,
                          })
   embedding_vectors.append(solver.get_computed_solution())
+  interpolation_progress_bar.set_postfix({ 'loss': loss_history[-1] })
 
 
 # embedding path
@@ -104,12 +106,14 @@ solver = ModelInverter(bert_modules.get_embedding_model(),
                        torch_device=torch_device)
 
 print('pass: embedding')
-for i in tqdm.tqdm(range(nb_interpolation_steps)):
-  solver.compute_inverse(embedding_vectors[i],
-                         n_max_steps=embedding_n_max_steps,
-                         min_loss=embedding_small_loss,
-                         lr=0.01)
+interpolation_progress_bar = tqdm.tqdm(range(nb_interpolation_steps))
+for i in interpolation_progress_bar:
+  loss_history = solver.compute_inverse(embedding_vectors[i],
+                                        n_max_steps=embedding_n_max_steps,
+                                        min_loss=embedding_small_loss,
+                                        lr=0.01)
   input_vectors.append(solver.get_computed_solution())
+  interpolation_progress_bar.set_postfix({ 'loss': loss_history[-1] })
 
 
 # text path
