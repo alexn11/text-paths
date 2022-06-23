@@ -8,14 +8,15 @@ import tqdm
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-default_start_sentence = 'The look  '
-end_sentence_one_word = 'There is no place like Italy.'
-end_sentence_keep_meaning = 'No place is like home.'
-end_sentence_different = 'The cat jumps over the fence.'
+default_start_sentence = 'I like pizzas.'
+end_sentence_one_word = 'I hate pizzas.'
+end_sentence_keep_meaning = 'I like any pizzas.'
+end_sentence_different = 'It is raining outside.'
 default_end_sentence = end_sentence_keep_meaning
 
 
 # python bert_text_path.py --device cpu --core-n-max-steps 6214 --nb-interpolation-steps 42
+# python bert_text_path.py --device cpu --weight-decay 0.1 --core-n-max-steps 614 --nb-interpolation-steps 10
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--lr', type=float, default=0.01)
