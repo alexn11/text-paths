@@ -46,10 +46,14 @@ model_inverter = ModelInverter(model,
                                loss_function=nn.MSELoss(reduction='sum'),
                                tensorboard_writer=tensorboard_writer)
 loss_history = model_inverter.compute_inverse(expected_output_vector,
-                                              n_max_steps=2000,
+                                              n_max_steps=20000,
                                               torch_device=torch_device,
-                                              lr=0.001)
-
+                                              lr=0.1)
+# lr experiments:
+# 0.001 smooth slow
+# 0.1 faster still smooth slow < best
+# 1 slightly worse than 0.1
+# 0.2 indistin
 
 
 

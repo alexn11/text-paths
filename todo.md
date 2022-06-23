@@ -10,6 +10,7 @@
 - at each step can start the optimization process with the previous step input
 
 # TODO
+- inceptionv3: add regularisation to make smoother images?
 - training for the inverse: the loss doesnt decrease a lot if at all.
 - solve the reverse the embedding problem (look what the embedding is made of)
 - the above requires 1-hot encoding and processing position embedding
