@@ -137,7 +137,7 @@ class ModelInverter:
     #print(loss.grad_fn)
     #loss.backward(retain_graph=True) # what does retain_graph do?
     #self.getBack(loss.grad_fn)
-    loss.backward()
+    loss.backward(retain_graph=True)
     self.optimizer.step()
     loss_value = loss.item()
     self.log_value('loss', index=step, value=loss_value)
