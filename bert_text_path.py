@@ -2,13 +2,20 @@
 # cd projects/text-paths
 # python
 import argparse
-import re
-import sys
 
-import matplotlib.pyplot as pyplot
+import tqdm
+
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
+default_start_sentence = 'The look  '
+end_sentence_one_word = 'There is no place like Italy.'
+end_sentence_keep_meaning = 'No place is like home.'
+end_sentence_different = 'The cat jumps over the fence.'
+default_end_sentence = end_sentence_keep_meaning
+
+
+# python bert_text_path.py --device cpu --core-n-max-steps 6214 --nb-interpolation-steps 42
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--lr', type=float, default=0.01)
@@ -16,16 +23,24 @@ argparser.add_argument('--device', type=str, default='auto')
 argparser.add_argument('--core-n-max-steps', type=int, default=332)
 argparser.add_argument('--core-small-loss', type=float, default=13500)#11080)
 argparser.add_argument('--nb-interpolation-steps', type=int, default=21)
+argparser.add_argument('--start-sentence', type=str, default=default_start_sentence)
+argparser.add_argument('--end-sentence', type=str, default=default_end_sentence)
+argparser.add_argument('--weight-decay', type=float, default=1.e-5)
 parsed_arguments = argparser.parse_args()
 
 print('command line arguments values:')
 print(parsed_arguments)
 
-learning_rate = parsed_arguments.lr
+start_sentence = parsed_arguments.start_sentence
+end_sentence = parsed_arguments.end_sentence
+
 torch_device = parsed_arguments.device
+
+nb_interpolation_steps = parsed_arguments.nb_interpolation_steps
 core_n_max_steps = parsed_arguments.core_n_max_steps
 core_small_loss = parsed_arguments.core_small_loss
-nb_interpolation_steps = parsed_arguments.nb_interpolation_steps
+learning_rate = parsed_arguments.lr
+weight_decay = parsed_arguments.weight_decay
 
 if(torch_device == 'auto'):
   torch_device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -36,10 +51,6 @@ tensorboard_writer = SummaryWriter()
 from input_optimizer import ModelInverter
 from bert_utils import BertModules, core_bert_loss_function
 
-start_sentence = 'There is no place like home.'
-end_sentence_one_word = 'There is no place like Italy.'
-end_sentence_keep_meaning = 'No place is like home.'
-end_sentence_different = 'The cat jumps over the fence.'
 
 embedding_small_loss = 10
 embedding_n_max_steps = 12 # 212
@@ -50,9 +61,8 @@ bert_modules = BertModules()
 core_model = bert_modules.get_core_model()
 embedding_model = bert_modules.get_embedding_model()
 
-# 1st path:
 start_text = start_sentence
-end_text = end_sentence_one_word
+end_text = end_sentence
 
 start_token_seq, start_emb_input, start_emb_output, start_core_output = bert_modules.compute_text_steps(start_text)
 start_core_input = start_emb_output
@@ -70,14 +80,17 @@ embedding_vectors = [ start_emb_output ]
 solver = ModelInverter(core_model,
                        start_core_input.detach().clone(),
                        loss_function=core_bert_loss_function,
+                       torch_device=torch_device,
                        tensorboard_writer=tensorboard_writer)
-
-for i in range(nb_interpolation_steps):
+print('pass: core')
+for i in tqdm.tqdm(range(nb_interpolation_steps)):
   solver.compute_inverse(outputs[i],
                          n_max_steps=core_n_max_steps,
                          min_loss=core_small_loss,
-                         torch_device=torch_device,#'cpu',
-                         lr=learning_rate)#lr=0.01)#lr=0.0001) # DEBUG: 0.01<ok, 1.<bad, 0.1<bad, 0.02 < ok?
+                         lr=learning_rate,
+                         optimizer_kwargs={
+                          'weight_decay': weight_decay,
+                         })
   embedding_vectors.append(solver.get_computed_solution())
 
 
@@ -85,13 +98,15 @@ for i in range(nb_interpolation_steps):
 
 input_vectors = [ start_emb_input ]
 
-solver = ModelInverter(bert_modules.get_embedding_model(), start_emb_input.clone().detach())
+solver = ModelInverter(bert_modules.get_embedding_model(),
+                       start_emb_input.clone().detach(),
+                       torch_device=torch_device)
 
-for i in range(nb_interpolation_steps):
+print('pass: embedding')
+for i in tqdm.tqdm(range(nb_interpolation_steps)):
   solver.compute_inverse(embedding_vectors[i],
                          n_max_steps=embedding_n_max_steps,
                          min_loss=embedding_small_loss,
-                         torch_device=torch_device, #'cpu',
                          lr=0.01)
   input_vectors.append(solver.get_computed_solution())
 

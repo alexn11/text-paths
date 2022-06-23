@@ -71,7 +71,9 @@ class ModelInverter:
                model,
                input_vectors,
                loss_function=nn.MSELoss(reduction='sum'),
+               torch_device='cpu',
                tensorboard_writer=None):
+    self.torch_device = torch_device
     self.input_optimizer_model = InputOptimizer(model, input_vectors)
     self.loss_function = loss_function
     self.tensorboard_writer = tensorboard_writer
@@ -86,27 +88,28 @@ class ModelInverter:
     self.tensorboard_writer.add_scalar(name, value, index)
     self.tensorboard_writer.flush()
     
-  def move_data_and_model_to_device(self, torch_device):
-    self.expected_output = self.expected_output.to(torch_device)
-    self.input_optimizer_model.to(torch_device)
+  def move_data_and_model_to_device(self):
+    self.expected_output = self.expected_output.to(self.torch_device)
+    self.input_optimizer_model.to(self.torch_device)
 
   def prepare_computations(self,
                            expected_output,
-                           torch_device='cpu',
                            lr=0.0001,
                            optimizer_class=None,
                            optimizer_kwargs={}):
   
     self.expected_output = expected_output
 
-    self.move_data_and_model_to_device(torch_device)
+    self.move_data_and_model_to_device()
   
     parameters_to_optimize = [ self.input_optimizer_model.input_vectors ]
     #assert(parameters_to_optimize[0].device == torch.device('cuda:0'))
     
     if(optimizer_class is None):
       # add some regularisation
-      self.optimizer = torch.optim.Adam(parameters_to_optimize, lr=lr, weight_decay=1.e-5)
+      # prbably not the best way to pass arguments...
+      weight_decay = optimizer_kwargs.get('weight_decay', 1.e-5)
+      self.optimizer = torch.optim.Adam(parameters_to_optimize, lr=lr, weight_decay=weight_decay)
       #self.optimizer = torch.optim.SGD(parameters_to_optimize, lr=lr)
       #self.optimizer = GradientDescent(parameters_to_optimize, lr=lr)
     else:
@@ -150,7 +153,6 @@ class ModelInverter:
                       optimizer_kwargs={}):
 
     self.prepare_computations(expected_output,
-                              torch_device=torch_device,
                               lr=lr,
                               optimizer_class=optimizer_class,
                               optimizer_kwargs=optimizer_kwargs)

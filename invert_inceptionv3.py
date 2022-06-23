@@ -18,7 +18,7 @@ from input_optimizer import ModelInverter
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--model-type', type=str, default='classes')
 argparser.add_argument('--image-name', type=str, default='')
-argparser.add_argument('--image-class', type=int, default=941)
+argparser.add_argument('--image-class', type=int, default=18)
 argparser.add_argument('--device', type=str, default='cuda')
 argparser.add_argument('--weight-decay', type=float, default=0.5) # 0.01
 argparser.add_argument('--inverter-nb-max-steps', type=int, default=500) # 1000 # 20000
@@ -95,9 +95,6 @@ expected_output_vector = torch.zeros_like(initial_outputs)
 
 if(model_type == 'classes'):
     expected_output_vector[0, image_class] = 1.
-    expected_output_vector = torch.tensor(expected_output_vector,
-                                          dtype=torch.float,
-                                          device=torch_device)
 else:
     expected_output_vector += torch.rand_like(expected_output_vector)
 

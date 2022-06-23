@@ -10,6 +10,9 @@
 - at each step can start the optimization process with the previous step input
 
 # TODO
+- input images in invert inception instead of doing random images
+- theres a deprecation warning about using .T ~line 65 of invert_inceptionv3
+- need to find the correct lr for embedding inception < maybe not < but maybe find the right weight_decay
 - text path: do forward then backward then take average?
 - move "torch_device" to constructor
 - text path: try the other experiments
@@ -19,8 +22,7 @@
   "small amount of L2 regularization (λ = 0.005)" (arxiv 1605.09304)
   check "deepdream"
 - inception: try different seeds
-- inception: compare with google
-- training for the inverse: the loss doesnt decrease a lot if at all.
+- training for the inverse: slow training
 - solve the reverse the embedding problem (look what the embedding is made of)
 - the above requires 1-hot encoding and processing position embedding
 - the path generation, with steps etc
