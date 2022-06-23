@@ -77,14 +77,17 @@ class ModelInverter:
     self.input_optimizer_model = InputOptimizer(model, input_vectors)
     self.loss_function = loss_function
     self.tensorboard_writer = tensorboard_writer
+    self.log_folder = ''
 
   #def to(self, device):
   #  self.input_optimizer_model.to(device)
     
-  def log_value(self, name, index=0, value=None):
+  def log_value(self, folder, name, index=0, value=None):
     if(self.tensorboard_writer is None):
       return
-    #print(f'log_value {name}: {index} - {value}')
+    #print(f'log_value {folder}/{name}: {index} - {value}')
+    if(folder != ''):
+      name = f'{folder}/{name}'
     self.tensorboard_writer.add_scalar(name, value, index)
     self.tensorboard_writer.flush()
     
@@ -140,7 +143,7 @@ class ModelInverter:
     loss.backward(retain_graph=True)
     self.optimizer.step()
     loss_value = loss.item()
-    self.log_value('loss', index=step, value=loss_value)
+    self.log_value(self.log_folder, 'loss', index=step, value=loss_value)
     return loss_value
     
   def compute_inverse(self,
@@ -150,7 +153,10 @@ class ModelInverter:
                       torch_device='cpu',
                       lr=0.0001,
                       optimizer_class=None,
-                      optimizer_kwargs={}):
+                      optimizer_kwargs={},
+                      log_folder=''):
+
+    self.log_folder = log_folder
 
     self.prepare_computations(expected_output,
                               lr=lr,

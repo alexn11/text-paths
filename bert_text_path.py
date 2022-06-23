@@ -17,18 +17,20 @@ default_end_sentence = end_sentence_keep_meaning
 
 # python bert_text_path.py --device cpu --core-n-max-steps 6214 --nb-interpolation-steps 42
 # python bert_text_path.py --device cpu --weight-decay 0.1 --core-n-max-steps 614 --nb-interpolation-steps 10
+# python bert_text_path.py --device cpu --weight-decay 0.1 --core-n-max-steps 3214 --nb-interpolation-steps 10 --end-sentence "I loathe pizzas."
+ 
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--lr', type=float, default=0.01)
 argparser.add_argument('--device', type=str, default='auto')
 argparser.add_argument('--core-n-max-steps', type=int, default=332)
-argparser.add_argument('--core-small-loss', type=float, default=13500)#11080)
+argparser.add_argument('--core-small-loss', type=float, default=1000.)#13500)#11080)
 argparser.add_argument('--nb-interpolation-steps', type=int, default=21)
 argparser.add_argument('--start-sentence', type=str, default=default_start_sentence)
 argparser.add_argument('--end-sentence', type=str, default=default_end_sentence)
 argparser.add_argument('--weight-decay', type=float, default=1.e-5)
-argparser.add_argument('--embedding-small-loss', type=int, default=10)
-argparser.add_argument('--embedding-n-max-steps', type=int, default=212)# = 12
+argparser.add_argument('--embedding-small-loss', type=float, default=10.)
+argparser.add_argument('--embedding-n-max-steps', type=int, default=12)# 64, = 212
 
 parsed_arguments = argparser.parse_args()
 
@@ -91,7 +93,8 @@ for i in interpolation_progress_bar:
                          lr=learning_rate,
                          optimizer_kwargs={
                           'weight_decay': weight_decay,
-                         })
+                         },
+                         log_folder='core') # f'core{i}'
   embedding_vectors.append(solver.get_computed_solution())
   interpolation_progress_bar.set_postfix({ 'loss': loss_history[-1] })
 
@@ -102,7 +105,8 @@ input_vectors = [ start_emb_input ]
 
 solver = ModelInverter(bert_modules.get_embedding_model(),
                        start_emb_input.clone().detach(),
-                       torch_device=torch_device)
+                       torch_device=torch_device,
+                       tensorboard_writer=tensorboard_writer)
 
 print('pass: embedding')
 interpolation_progress_bar = tqdm.tqdm(range(nb_interpolation_steps))
@@ -110,7 +114,8 @@ for i in interpolation_progress_bar:
   loss_history = solver.compute_inverse(embedding_vectors[i],
                                         n_max_steps=embedding_n_max_steps,
                                         min_loss=embedding_small_loss,
-                                        lr=0.01)
+                                        lr=0.01,
+                                        log_folder='embedding') # f'embedding{i}'
   input_vectors.append(solver.get_computed_solution())
   interpolation_progress_bar.set_postfix({ 'loss': loss_history[-1] })
 
