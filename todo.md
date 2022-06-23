@@ -17,7 +17,6 @@
 - text path: do forward then backward then take average?
 - move "torch_device" to constructor
 - text path: try the other experiments
-- inception:try inverse with the logits/embedding instead of class
 - now that it is doing model.eval() try again with bert check if there is still an error < the error still there
 - inceptionv3: add regularisation to make smoother images?
   "small amount of L2 regularization (λ = 0.005)" (arxiv 1605.09304)
@@ -59,6 +58,7 @@ BAD
 0.1
 
 # DONE
+- inception:try inverse with the logits/embedding instead of class
 - make the thing work on inceptionv3 as well :)
   (so far not successfull)
 - learning is very slow, try other optimizer: simple gradient(?) > doesnt seem better

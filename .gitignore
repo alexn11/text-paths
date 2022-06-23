@@ -3,3 +3,5 @@
 runs/
 __pycache__/
 utils-code-snippets.py
+# debug scripts
+checking-devices.py

@@ -18,7 +18,7 @@ default_end_sentence = end_sentence_keep_meaning
 # python bert_text_path.py --device cpu --core-n-max-steps 6214 --nb-interpolation-steps 42
 # python bert_text_path.py --device cpu --weight-decay 0.1 --core-n-max-steps 614 --nb-interpolation-steps 10
 # python bert_text_path.py --device cpu --weight-decay 0.1 --core-n-max-steps 3214 --nb-interpolation-steps 10 --end-sentence "I loathe pizzas."
- 
+# python bert_text_path.py --device cpu --weight-decay 0.0001 --core-n-max-steps 3214 --nb-interpolation-steps 10 --end-sentence "I'm a leopard." --embedding-n-max-steps 12
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--lr', type=float, default=0.01)
