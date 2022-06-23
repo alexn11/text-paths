@@ -41,10 +41,16 @@ print(f'Using {torch_device} device')
 tensorboard_writer = SummaryWriter()
 
 model = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True)
+
+def remove_last_layer(inception_model):
+    # https://stackoverflow.com/questions/52548174/how-to-remove-the-last-fc-layer-from-a-resnet-model-in-pytorch
+    inception_model.fc = torch.nn.Identity()
+    return inception_model
+
+
 if(model_type == 'embedding'):
     print(f'model type is {model_type}: removing the last layers')
-    inception_layers = list(model.children())
-    model = torch.nn.Sequential(*(inception_layers[:-2]))
+    model = remove_last_layer(model)
 model.to(torch_device)
 
 norm_mean = [ 0.485, 0.456, 0.406 ]
@@ -73,7 +79,7 @@ initial_outputs = model(input_vector)
 # input shape: batch_size x 3 x 299 x 299
 # output shape: batch_size x 1000
 
-expected_output_vector = numpy.zeros(shape=initial_outputs.shape)
+expected_output_vector = torch.zeros_like(initial_outputs)
 
 if(model_type == 'classes'):
     expected_output_vector[0, image_class] = 1.
