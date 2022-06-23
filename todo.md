@@ -10,14 +10,18 @@
 - at each step can start the optimization process with the previous step input
 
 # TODO
+- text path: do forward then backward then take average?
+- text path: try the other experiments
+- inception:try inverse with the logits/embedding instead of class
 - now that it is doing model.eval() try again with bert check if there is still an error < the error still there
 - inceptionv3: add regularisation to make smoother images?
 - inception: try different seeds
+- inception: compare with google
 - training for the inverse: the loss doesnt decrease a lot if at all.
 - solve the reverse the embedding problem (look what the embedding is made of)
 - the above requires 1-hot encoding and processing position embedding
 - the path generation, with steps etc
-- device bug, something isnt on the proper device
+- device bug, something isnt on the proper device, no chance so far :(
 - 🐈️
 
 # WHAT IS READY
@@ -30,8 +34,7 @@
 
 
 # COULD DO
-- make the thing work on inceptionv3 as well :)
-  (so far not successfull)
+
 
 # EXPERIMENTS WITH LR - ADAM
 
@@ -50,5 +53,7 @@ BAD
 0.1
 
 # DONE
+- make the thing work on inceptionv3 as well :)
+  (so far not successfull)
 - learning is very slow, try other optimizer: simple gradient(?) > doesnt seem better
 - add tensorboard to survey progress
