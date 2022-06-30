@@ -28,7 +28,7 @@ argparser.add_argument('--core-small-loss', type=float, default=1000.)#13500)#11
 argparser.add_argument('--nb-interpolation-steps', type=int, default=21)
 argparser.add_argument('--start-sentence', type=str, default=default_start_sentence)
 argparser.add_argument('--end-sentence', type=str, default=default_end_sentence)
-argparser.add_argument('--weight-decay', type=float, default=1.e-5)
+argparser.add_argument('--weight-decay', type=float, default=0.) #1.e-5)
 argparser.add_argument('--embedding-small-loss', type=float, default=10.)
 argparser.add_argument('--embedding-n-max-steps', type=int, default=12)# 64, = 212
 

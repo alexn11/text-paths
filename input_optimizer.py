@@ -71,11 +71,13 @@ class ModelInverter:
                model,
                input_vectors,
                loss_function=nn.MSELoss(reduction='sum'),
+               do_use_inputs_in_loss_function=False,
                torch_device='cpu',
                tensorboard_writer=None):
     self.torch_device = torch_device
     self.input_optimizer_model = InputOptimizer(model, input_vectors)
     self.loss_function = loss_function
+    self.do_use_inputs_in_loss_functions = do_use_inputs_in_loss_function
     self.tensorboard_writer = tensorboard_writer
     self.log_folder = ''
 
@@ -121,10 +123,17 @@ class ModelInverter:
     input_optimizer = self.input_optimizer_model
     input_optimizer.train()
     
+  def compute_loss(self, outputs, expected_outputs, inputs):
+    if(self.do_use_inputs_in_loss_functions):
+      loss = self.loss_function(outputs, expected_outputs, inputs)
+    else:
+      loss = self.loss_function(outputs, expected_outputs)
+    return loss
+
   def computation_step(self, step=None):
     self.optimizer.zero_grad()
     current_output = self.input_optimizer_model.forward()
-    loss = self.loss_function(current_output, self.expected_output)
+    loss = self.compute_loss(current_output, self.expected_output, self.input_optimizer_model.input_vectors)
     #print(self.input_optimizer_model.model)
     #print('devices:')
     #print(f'  cur_outp:{current_output.device},')
